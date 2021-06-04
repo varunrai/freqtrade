@@ -209,7 +209,7 @@ def test_nonexisting_stoploss(mocker, edge_conf):
     assert edge.stoploss('N/O') == -0.1
 
 
-def test_stake_amount(mocker, edge_conf):
+def test_edge_stake_amount(mocker, edge_conf):
     freqtrade = get_patched_freqtradebot(mocker, edge_conf)
     edge = Edge(edge_conf, freqtrade.exchange, freqtrade.strategy)
     mocker.patch('freqtrade.edge.Edge._cached_pairs', mocker.PropertyMock(
@@ -217,20 +217,33 @@ def test_stake_amount(mocker, edge_conf):
             'E/F': PairInfo(-0.02, 0.66, 3.71, 0.50, 1.71, 10, 60),
         }
     ))
-    free = 100
-    total = 100
-    in_trade = 25
-    assert edge.stake_amount('E/F', free, total, in_trade) == 31.25
+    assert edge._capital_ratio == 0.5
+    assert edge.stake_amount('E/F', free_capital=100, total_capital=100,
+                             capital_in_trade=25) == 31.25
 
-    free = 20
-    total = 100
-    in_trade = 25
-    assert edge.stake_amount('E/F', free, total, in_trade) == 20
+    assert edge.stake_amount('E/F', free_capital=20, total_capital=100,
+                             capital_in_trade=25) == 20
 
-    free = 0
-    total = 100
-    in_trade = 25
-    assert edge.stake_amount('E/F', free, total, in_trade) == 0
+    assert edge.stake_amount('E/F', free_capital=0, total_capital=100,
+                             capital_in_trade=25) == 0
+
+    # Test with increased allowed_risk
+    # Result should be no more than allowed capital
+    edge._allowed_risk = 0.4
+    edge._capital_ratio = 0.5
+    assert edge.stake_amount('E/F', free_capital=100, total_capital=100,
+                             capital_in_trade=25) == 62.5
+
+    assert edge.stake_amount('E/F', free_capital=100, total_capital=100,
+                             capital_in_trade=0) == 50
+
+    edge._capital_ratio = 1
+    # Full capital is available
+    assert edge.stake_amount('E/F', free_capital=100, total_capital=100,
+                             capital_in_trade=0) == 100
+    # Full capital is available
+    assert edge.stake_amount('E/F', free_capital=0, total_capital=100,
+                             capital_in_trade=0) == 0
 
 
 def test_nonexisting_stake_amount(mocker, edge_conf):
@@ -253,7 +266,7 @@ def test_edge_heartbeat_calculate(mocker, edge_conf):
     # should not recalculate if heartbeat not reached
     edge._last_updated = arrow.utcnow().int_timestamp - heartbeat + 1
 
-    assert edge.calculate() is False
+    assert edge.calculate(edge_conf['exchange']['pair_whitelist']) is False
 
 
 def mocked_load_data(datadir, pairs=[], timeframe='0m',
@@ -297,7 +310,7 @@ def test_edge_process_downloaded_data(mocker, edge_conf):
     mocker.patch('freqtrade.edge.edge_positioning.load_data', mocked_load_data)
     edge = Edge(edge_conf, freqtrade.exchange, freqtrade.strategy)
 
-    assert edge.calculate()
+    assert edge.calculate(edge_conf['exchange']['pair_whitelist'])
     assert len(edge._cached_pairs) == 2
     assert edge._last_updated <= arrow.utcnow().int_timestamp + 2
 
@@ -309,7 +322,7 @@ def test_edge_process_no_data(mocker, edge_conf, caplog):
     mocker.patch('freqtrade.edge.edge_positioning.load_data', MagicMock(return_value={}))
     edge = Edge(edge_conf, freqtrade.exchange, freqtrade.strategy)
 
-    assert not edge.calculate()
+    assert not edge.calculate(edge_conf['exchange']['pair_whitelist'])
     assert len(edge._cached_pairs) == 0
     assert log_has("No data found. Edge is stopped ...", caplog)
     assert edge._last_updated == 0
@@ -317,16 +330,35 @@ def test_edge_process_no_data(mocker, edge_conf, caplog):
 
 def test_edge_process_no_trades(mocker, edge_conf, caplog):
     freqtrade = get_patched_freqtradebot(mocker, edge_conf)
-    mocker.patch('freqtrade.exchange.Exchange.get_fee', MagicMock(return_value=0.001))
-    mocker.patch('freqtrade.edge.edge_positioning.refresh_data', MagicMock())
+    mocker.patch('freqtrade.exchange.Exchange.get_fee', return_value=0.001)
+    mocker.patch('freqtrade.edge.edge_positioning.refresh_data', )
     mocker.patch('freqtrade.edge.edge_positioning.load_data', mocked_load_data)
     # Return empty
-    mocker.patch('freqtrade.edge.Edge._find_trades_for_stoploss_range', MagicMock(return_value=[]))
+    mocker.patch('freqtrade.edge.Edge._find_trades_for_stoploss_range', return_value=[])
     edge = Edge(edge_conf, freqtrade.exchange, freqtrade.strategy)
 
-    assert not edge.calculate()
+    assert not edge.calculate(edge_conf['exchange']['pair_whitelist'])
     assert len(edge._cached_pairs) == 0
     assert log_has("No trades found.", caplog)
+
+
+def test_edge_process_no_pairs(mocker, edge_conf, caplog):
+    edge_conf['exchange']['pair_whitelist'] = []
+    mocker.patch('freqtrade.freqtradebot.validate_config_consistency')
+
+    freqtrade = get_patched_freqtradebot(mocker, edge_conf)
+    fee_mock = mocker.patch('freqtrade.exchange.Exchange.get_fee', return_value=0.001)
+    mocker.patch('freqtrade.edge.edge_positioning.refresh_data')
+    mocker.patch('freqtrade.edge.edge_positioning.load_data', mocked_load_data)
+    # Return empty
+    mocker.patch('freqtrade.edge.Edge._find_trades_for_stoploss_range', return_value=[])
+    edge = Edge(edge_conf, freqtrade.exchange, freqtrade.strategy)
+    assert fee_mock.call_count == 0
+    assert edge.fee is None
+
+    assert not edge.calculate(['XRP/USDT'])
+    assert fee_mock.call_count == 1
+    assert edge.fee == 0.001
 
 
 def test_edge_init_error(mocker, edge_conf,):

@@ -6,13 +6,38 @@ import logging
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterator, List
 from typing.io import IO
 
 import rapidjson
 
+from freqtrade.constants import DECIMAL_PER_COIN_FALLBACK, DECIMALS_PER_COIN
+
 
 logger = logging.getLogger(__name__)
+
+
+def decimals_per_coin(coin: str):
+    """
+    Helper method getting decimal amount for this coin
+    example usage: f".{decimals_per_coin('USD')}f"
+    :param coin: Which coin are we printing the price / value for
+    """
+    return DECIMALS_PER_COIN.get(coin, DECIMAL_PER_COIN_FALLBACK)
+
+
+def round_coin_value(value: float, coin: str, show_coin_name=True) -> str:
+    """
+    Get price value for this coin
+    :param value: Value to be printed
+    :param coin: Which coin are we printing the price / value for
+    :param show_coin_name: Return string in format: "222.22 USDT" or "222.22"
+    :return: Formatted / rounded value (with or without coin name)
+    """
+    if show_coin_name:
+        return f"{value:.{decimals_per_coin(coin)}f} {coin}"
+    else:
+        return f"{value:.{decimals_per_coin(coin)}f}"
 
 
 def shorten_date(_date: str) -> str:
@@ -56,7 +81,7 @@ def json_load(datafile: IO) -> Any:
     """
     load data with rapidjson
     Use this to have a consistent experience,
-    sete number_mode to "NM_NATIVE" for greatest speed
+    set number_mode to "NM_NATIVE" for greatest speed
     """
     return rapidjson.load(datafile, number_mode=rapidjson.NM_NATIVE)
 
@@ -177,3 +202,14 @@ def render_template_with_fallback(templatefile: str, templatefallbackfile: str,
         return render_template(templatefile, arguments)
     except TemplateNotFound:
         return render_template(templatefallbackfile, arguments)
+
+
+def chunks(lst: List[Any], n: int) -> Iterator[List[Any]]:
+    """
+    Split lst into chunks of the size n.
+    :param lst: list to split into chunks
+    :param n: number of max elements per chunk
+    :return: None
+    """
+    for chunk in range(0, len(lst), n):
+        yield (lst[chunk:chunk + n])

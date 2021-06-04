@@ -1,4 +1,4 @@
-# Freqtrade
+# ![freqtrade](https://raw.githubusercontent.com/freqtrade/freqtrade/develop/docs/assets/freqtrade_poweredby.svg)
 
 [![Freqtrade CI](https://github.com/freqtrade/freqtrade/workflows/Freqtrade%20CI/badge.svg)](https://github.com/freqtrade/freqtrade/actions/)
 [![Coverage Status](https://coveralls.io/repos/github/freqtrade/freqtrade/badge.svg?branch=develop&service=github)](https://coveralls.io/github/freqtrade/freqtrade?branch=develop)
@@ -22,12 +22,21 @@ expect.
 We strongly recommend you to have coding and Python knowledge. Do not
 hesitate to read the source code and understand the mechanism of this bot.
 
-## Exchange marketplaces supported
+## Supported Exchange marketplaces
+
+Please read the [exchange specific notes](docs/exchanges.md) to learn about eventual, special configurations needed for each exchange.
 
 - [X] [Bittrex](https://bittrex.com/)
 - [X] [Binance](https://www.binance.com/) ([*Note for binance users](docs/exchanges.md#blacklists))
 - [X] [Kraken](https://kraken.com/)
-- [ ] [113 others to tests](https://github.com/ccxt/ccxt/). _(We cannot guarantee they will work)_
+- [X] [FTX](https://ftx.com)
+- [ ] [potentially many others](https://github.com/ccxt/ccxt/). _(We cannot guarantee they will work)_
+
+### Community tested
+
+Exchanges confirmed working by the community:
+
+- [X] [Bitvavo](https://bitvavo.com/)
 
 ## Documentation
 
@@ -138,14 +147,14 @@ For any questions not covered by the documentation or for further information ab
 
 Please check out our [discord server](https://discord.gg/MA9v74M).
 
-You can also join our [Slack channel](https://join.slack.com/t/highfrequencybot/shared_invite/zt-l9d9iqgl-9cVBIeBkCBa8j6upSmd_NA).
+You can also join our [Slack channel](https://join.slack.com/t/highfrequencybot/shared_invite/zt-mm786y93-Fxo37glxMY9g8OQC5AoOIw).
 
 ### [Bugs / Issues](https://github.com/freqtrade/freqtrade/issues?q=is%3Aissue)
 
 If you discover a bug in the bot, please
 [search our issue tracker](https://github.com/freqtrade/freqtrade/issues?q=is%3Aissue)
 first. If it hasn't been reported, please
-[create a new issue](https://github.com/freqtrade/freqtrade/issues/new) and
+[create a new issue](https://github.com/freqtrade/freqtrade/issues/new/choose) and
 ensure you follow the template guide so that our team can assist you as
 quickly as possible.
 
@@ -154,7 +163,7 @@ quickly as possible.
 Have you a great idea to improve the bot you want to share? Please,
 first search if this feature was not [already discussed](https://github.com/freqtrade/freqtrade/labels/enhancement).
 If it hasn't been requested, please
-[create a new request](https://github.com/freqtrade/freqtrade/issues/new)
+[create a new request](https://github.com/freqtrade/freqtrade/issues/new/choose)
 and ensure you follow the template guide so that it does not get lost
 in the bug reports.
 
@@ -169,7 +178,7 @@ to understand the requirements before sending your pull-requests.
 Coding is not a necessity to contribute - maybe start with improving our documentation?
 Issues labeled [good first issue](https://github.com/freqtrade/freqtrade/labels/good%20first%20issue) can be good first contributions, and will help get you familiar with the codebase.
 
-**Note** before starting any major new feature work, *please open an issue describing what you are planning to do* or talk to us on [discord](https://discord.gg/MA9v74M) or [Slack](https://join.slack.com/t/highfrequencybot/shared_invite/zt-k9o2v5ut-jX8Mc4CwNM8CDc2Dyg96YA). This will ensure that interested parties can give valuable feedback on the feature, and let others know that you are working on it.
+**Note** before starting any major new feature work, *please open an issue describing what you are planning to do* or talk to us on [discord](https://discord.gg/MA9v74M) or [Slack](https://join.slack.com/t/highfrequencybot/shared_invite/zt-mm786y93-Fxo37glxMY9g8OQC5AoOIw). This will ensure that interested parties can give valuable feedback on the feature, and let others know that you are working on it.
 
 **Important:** Always create your PR against the `develop` branch, not `stable`.
 
